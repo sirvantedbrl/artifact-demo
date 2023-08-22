@@ -1,0 +1,73 @@
+---
+- name: setup artifact demo server
+  
+  hosts: installation
+
+  become: yes
+
+  tasks:
+
+    - name: change hostname
+      hostname:
+        name: artifact
+      
+
+    - name: install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+
+    - name: add docker gpg apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+        
+    - name: add docker repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+
+    - name: install docker module for python
+      pip:
+        name: docker
+
+    - name: download minikube
+      shell: "curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+
+    - name: install minikube
+      shell: "install minikube-linux-amd64 /usr/local/bin/minikube"
+
+    - name: add user to docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+    - name: copy deployment.yaml to remote server
+      copy:
+        src: /home/sirvan/endaksisekerim/deployment.yaml
+        dest: /home/vagrant/deployment.yaml
+      become: yes
+        
+    - block:
+      - name: start minikube
+        shell: "minikube start --force --driver=docker"
+
+      - name: deploy using deployment.yaml
+        shell: "minikube kubectl -- apply -f /home/vagrant/deployment.yaml"
+      
+      become: yes
+      become_user: vagrant
+      become_method: su

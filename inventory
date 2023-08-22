@@ -1,0 +1,7 @@
+[installation]
+192.168.1.45 ansible_connection=ssh ansible_ssh_user=root 
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=vagrant
+ansible_ssh_pass=123
